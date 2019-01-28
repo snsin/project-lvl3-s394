@@ -34,7 +34,7 @@
   "homepage": "https://github.com/snsin/project-lvl3-s394#readme",
   "jest": {
     "testEnvironment": "node",
-    "coverageReporters": ["lcov"]
+    "coverageReporters": ["lcov", "text"]
   },
   "devDependencies": {
     "@babel/cli": "^7.2.0",
