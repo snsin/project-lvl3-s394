@@ -14,7 +14,12 @@ build:
 	rm -rf dist
 	npm run build
 
+coverage:
+	rm -rf coverage
+	npm run coverage
+
 test:
 	npm test
 
 .PHONY: test
+.PHONY: coverage
