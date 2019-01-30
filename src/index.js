@@ -30,7 +30,7 @@ const loadPage = (pageUrl, targetDir) => axios.get(pageUrl)
   })
   .catch((e) => {
     const newErr = { ...e, message: createMessage(e) };
-    throw newErr;
+    throw new Error(createMessage(e));
   });
 
 export default loadPage;

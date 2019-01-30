@@ -35,7 +35,7 @@ test('page not found', async () => {
   try {
     await loadPage(fixtures.url.href, fixtures.targetDir);
   } catch (e) {
-    expect(e).toHaveProperty('response.status', 404);
+    expect(e.message).toMatch('404');
   }
 });
 
@@ -46,6 +46,6 @@ test('directory not exist', async () => {
   try {
     await loadPage(fixtures.url.href, join(fixtures.targetDir, 'not-exist'));
   } catch (e) {
-    expect(e).toHaveProperty('code', 'ENOENT');
+    expect(e.message).toMatch('ENOENT');
   }
 });
