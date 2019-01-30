@@ -21,5 +21,4 @@ coverage:
 test:
 	npm test
 
-.PHONY: test
-.PHONY: coverage
+.PHONY: test coverage
