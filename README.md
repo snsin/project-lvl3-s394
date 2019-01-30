@@ -16,3 +16,6 @@ Options:
   -o, --output [dir]  Output directory
   -h, --help          output usage information
 ```
+
+## How to instal and load one page
+[![asciicast](https://asciinema.org/a/F2v654EZ0XCgfz1J6PWqm0gIO.svg)](https://asciinema.org/a/F2v654EZ0XCgfz1J6PWqm0gIO)
