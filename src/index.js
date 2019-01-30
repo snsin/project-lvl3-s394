@@ -22,7 +22,7 @@ const createMessage = (e = { message: '' }) => {
   return errType ? errorTypeSelector[errType](e) : errorTypeSelector.unknown(e);
 };
 
-const loadPage = (targetDir = process.cwd(), pageUrl) => axios.get(pageUrl)
+const loadPage = (pageUrl, targetDir) => axios.get(pageUrl)
   .then(res => res.data)
   .then((data) => {
     const filePath = path.join(targetDir, createFileName(pageUrl));
