@@ -29,7 +29,6 @@ const loadPage = (pageUrl, targetDir) => axios.get(pageUrl)
     return fs.writeFile(filePath, data, 'utf8');
   })
   .catch((e) => {
-    const newErr = { ...e, message: createMessage(e) };
     throw new Error(createMessage(e));
   });
 
