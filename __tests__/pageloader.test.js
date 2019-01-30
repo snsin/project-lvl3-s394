@@ -32,20 +32,14 @@ test('page not found', async () => {
   nock(fixtures.url.origin)
     .get(fixtures.url.pathname)
     .reply(404);
-  try {
-    await loadPage(fixtures.url.href, fixtures.targetDir);
-  } catch (e) {
-    expect(e.message).toMatch('404');
-  }
+  await expect(loadPage(fixtures.url.href, fixtures.targetDir))
+    .rejects.toThrow('404');
 });
 
 test('directory not exist', async () => {
   nock(fixtures.url.origin)
     .get(fixtures.url.pathname)
     .reply(200, fixtures.data);
-  try {
-    await loadPage(fixtures.url.href, join(fixtures.targetDir, 'not-exist'));
-  } catch (e) {
-    expect(e.message).toMatch('ENOENT');
-  }
+  await expect(loadPage(fixtures.url.href, join(fixtures.targetDir, 'not-exist')))
+    .rejects.toThrow('ENOENT');
 });
