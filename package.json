@@ -1,6 +1,6 @@
 {
-  "name": "page-loader-snsin",
-  "version": "0.2.0",
+  "name": "page-loader-sergsin",
+  "version": "0.2.1",
   "description": "Page loader. Console utility. Training project level3",
   "main": "dist/index.js",
   "bin": {
