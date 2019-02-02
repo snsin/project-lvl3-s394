@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import { createWriteStream, promises as fs } from 'fs';
 import path from 'path';
 import axios from 'axios';
 import cheerio from 'cheerio';
@@ -7,7 +7,6 @@ import { findKey, has } from 'lodash';
 const createFileName = (pageUrl, ending = '') => {
   const { hostname, pathname } = new URL(pageUrl);
   const pathParts = pathname.split('/').filter(w => w.length > 0);
-
   const hostParts = hostname.split('.');
   return `${[...hostParts, ...pathParts].join('-')}${ending}`;
 };
@@ -29,7 +28,43 @@ const attrToTagTable = {
   script: 'src',
 };
 
-const localResourse = /^\/\w.*/; // matches local recourses
+
+const getLocalResouses = (dom) => {
+  const localResourseRegexp = /^\/\w.*/; // matches local recourses paths
+  const tagsString = Object.keys(attrToTagTable).join(',');
+  return dom(tagsString)
+    .map((i, elem) => {
+      const node = dom(elem);
+      const [{ name }] = node.get();
+      const attrname = attrToTagTable[name];
+      const url = node.attr(attrname);
+      return { node, url, attrname };
+    })
+    .get()
+    .filter(({ url }) => localResourseRegexp.test(url))
+    .map((res) => {
+      const filename = res.url.match(/[\w-.]+/g).join('-');
+      return { ...res, filename };
+    });
+};
+
+const getResousesRequests = (resourses, pageUrl) => resourses
+  .map(({ url }) => {
+    const resUrl = new URL(pageUrl);
+    resUrl.pathname = url;
+    return axios({
+      method: 'get',
+      url: resUrl.href,
+      responseType: 'stream',
+    });
+  });
+
+const createResoursesWriteList = (responses, dir, resourses) => responses
+  .map((resp, i) => {
+    const filepath = path.join(dir, resourses[i].filename);
+    return resp.data.pipe(createWriteStream(filepath));
+  });
+
 
 const loadPage = (pageUrl, targetDir) => {
   let $;
@@ -38,34 +73,20 @@ const loadPage = (pageUrl, targetDir) => {
   const resoursesDirPath = path.join(targetDir, resoursesDirName);
   return fs.mkdir(resoursesDirPath)
     .then(() => axios.get(pageUrl))
-    .then((res) => {
-      $ = cheerio.load(res.data);
-      resourses = $('link,script,img').map((i, elem) => {
-        const node = $(elem);
-        const [{ name }] = node.get();
-        const url = node.attr(attrToTagTable[name]);
-        return { node, url };
-      }).get().filter(({ url }) => localResourse.test(url));
-      return Promise.all(resourses
-        .map(({ url }) => {
-          const resUrl = new URL(pageUrl);
-          resUrl.pathname = url;
-          return axios(/* {
-            method: 'get',
-            url: resUrl.href,
-            responseType: 'stream',
-          } */resUrl.href,
-          );
-        }));
+    .then((htmlResp) => {
+      $ = cheerio.load(htmlResp.data);
+      resourses = getLocalResouses($);
+      return Promise.all(getResousesRequests(resourses, pageUrl));
     })
-    .then(loadedResourses => Promise.all(loadedResourses
-      // TODO implement create file name more intelligent
-      .map((res, i) => fs.writeFile(
-        path.join(targetDir, resoursesDirName, `${resourses[i].url.pathname}`), res, 'utf8',
-      ))))
+    .then(responses => Promise.all(
+      createResoursesWriteList(responses, resoursesDirPath, resourses),
+    ))
     .then(() => {
-      const filePath = path.join(targetDir, createFileName(pageUrl, '.html'));
-      return fs.writeFile(filePath, $.html(), 'utf8');
+      resourses.forEach(({ node, attrname, filename }) => {
+        node.attr(attrname, path.join(resoursesDirName, filename));
+      });
+      const resultHtmlPath = path.join(targetDir, createFileName(pageUrl, '.html'));
+      return fs.writeFile(resultHtmlPath, $.html(), 'utf8');
     })
     .catch((e) => {
       throw new Error(createMessage(e));
