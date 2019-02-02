@@ -3,6 +3,14 @@ import path from 'path';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import { findKey, has } from 'lodash';
+import debug from 'debug';
+
+import { name as packagename } from '../package.json';
+
+const loggingName = packagename.match(/\w+-\w+/)[0];
+const log = debug(`${loggingName}:log`);
+const err = debug(`${loggingName}:err`);
+
 
 const createFileName = (pageUrl, ending = '') => {
   const { hostname, pathname } = new URL(pageUrl);
@@ -67,29 +75,43 @@ const createResoursesWriteList = (responses, dir, resourses) => responses
 
 
 const loadPage = (pageUrl, targetDir) => {
+  log('start %o', loggingName);
+  log('page url:', pageUrl);
+  log('target directory: %s', targetDir);
   let $;
   let resourses;
   const resoursesDirName = createFileName(pageUrl, '_files');
   const resoursesDirPath = path.join(targetDir, resoursesDirName);
   return fs.mkdir(resoursesDirPath)
-    .then(() => axios.get(pageUrl))
+    .then(() => {
+      log('resourses directory created: %s', resoursesDirPath);
+      return axios.get(pageUrl);
+    })
     .then((htmlResp) => {
+      log('response recieved from %s status: %d', pageUrl, htmlResp.status);
       $ = cheerio.load(htmlResp.data);
       resourses = getLocalResouses($);
+      log('resourses list created: %O', resourses);
       return Promise.all(getResousesRequests(resourses, pageUrl));
     })
     .then(responses => Promise.all(
       createResoursesWriteList(responses, resoursesDirPath, resourses),
     ))
     .then(() => {
+      log('resourses files written: \n%O', resourses.map(({ filename }) => filename));
       resourses.forEach(({ node, attrname, filename }) => {
         node.attr(attrname, path.join(resoursesDirName, filename));
       });
       const resultHtmlPath = path.join(targetDir, createFileName(pageUrl, '.html'));
+      log('writing result html started: %s', resultHtmlPath);
       return fs.writeFile(resultHtmlPath, $.html(), 'utf8');
     })
     .catch((e) => {
+      err('error thrown %O', e);
       throw new Error(createMessage(e));
+    })
+    .then(() => {
+      log('%s downloaded to %s', pageUrl, targetDir);
     });
 };
 

@@ -21,4 +21,7 @@ coverage:
 test:
 	npm test
 
-.PHONY: test coverage
+debug-test:
+	DEBUG=page-loader:* npm test
+
+.PHONY: test coverage debug-test
