@@ -25,6 +25,11 @@ const createUrlByPath = (path) => {
   return resultUrl;
 };
 
+const mockLoaderRequests = () => nock(fixtures.url.origin)
+  .get(path => getResoursePath(path))
+  .times(fixtures.resourses.length)
+  .reply(200, path => getResourseData(path));
+
 beforeAll(async () => {
   nock.disableNetConnect();
   fixtures.url = new URL('https://jestjs.io');
@@ -51,19 +56,17 @@ beforeAll(async () => {
     .map(([urlPath, filePath, data]) => ({ urlPath, filePath, data }));
 });
 
+afterAll(() => {
+  nock.cleanAll();
+});
+
 beforeEach(async () => {
   fixtures.targetDir = await fs.mkdtemp(join(os.tmpdir(), 'page-load-'));
 });
 
 
 test('load data to files', async () => {
-  nock(fixtures.url.origin)
-    .get(path => getResoursePath(path))
-    .times(fixtures.resourses.length)
-    .reply(200, (path) => {
-      const data = getResourseData(path);
-      return data;
-    });
+  mockLoaderRequests();
 
   const {
     urlPath: urlRootHtmlPath,
@@ -94,10 +97,7 @@ test('page not found', async () => {
 });
 
 test('directory not exist', async () => {
-  nock(fixtures.url.origin)
-    .get(path => getResoursePath(path))
-    .times(fixtures.resourses.length)
-    .reply(200, path => getResourseData(path));
+  mockLoaderRequests();
   const targetUrl = createUrlByPath(head(fixtures.resourses).urlPath);
   await expect(loadPage(targetUrl.href, join(fixtures.targetDir, 'not-exist')))
     .rejects.toThrow('ENOENT');
