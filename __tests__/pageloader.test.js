@@ -2,58 +2,64 @@ import nock from 'nock';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import os from 'os';
-import { head, tail } from 'lodash';
+import { tail } from 'lodash';
 import loadPage from '../src';
-
-const createResoursesTuples = (resoursesDir, resoursesPaths) => resoursesPaths
-  .map((resPath) => {
-    const fileName = tail(resPath.split('/')).join('-');
-    return [resPath, join(resoursesDir, fileName)];
-  });
 
 const fixtures = {};
 
 const getResoursePath = path => fixtures.resourses
-  .find(({ urlPath }) => urlPath === path).urlPath;
+  .find(({ urlPath }) => urlPath === path)
+  .urlPath;
 
-const getResourseData = path => fixtures.resourses
-  .find(({ urlPath }) => urlPath === path).data;
-
-const createUrlByPath = (path) => {
-  const resultUrl = new URL(fixtures.url.origin);
-  resultUrl.pathname = path;
-  return resultUrl;
+const getResourseData = (path) => {
+  const dataIndex = fixtures.resourses
+    .findIndex(({ urlPath }) => urlPath === path);
+  return fixtures.data[dataIndex];
 };
-
-const mockLoaderRequests = () => nock(fixtures.url.origin)
-  .get(path => getResoursePath(path))
-  .times(fixtures.resourses.length)
-  .reply(200, path => getResourseData(path));
 
 beforeAll(async () => {
   nock.disableNetConnect();
-  fixtures.url = new URL('https://jestjs.io');
+  fixtures.url = new URL('https://jestjs.io/en/help');
   const fixtureDir = '__tests__/__fixtures__/';
-  fixtures.localHtmlData = await fs.readFile(join(fixtureDir, 'localized.html'));
-  const pathFileTuples = [
-    ['/en/help', 'jestjs-io-en-help.html'],
-    ...createResoursesTuples('jestjs-io-en-help_files',
-      [
-        '/img/favicon/favicon.ico',
-        '/css/main.css',
-        '/js/codetabs.js',
-        '/img/jest.svg',
-        '/img/language.svg',
-        '/img/jest-outline.svg',
-        '/img/oss_logo.png',
-      ]),
+  fixtures.localHtml = await fs.readFile(join(fixtureDir, 'localized.html'));
+  fixtures.resourses = [
+    {
+      urlPath: '/en/help',
+      fsPath: 'jestjs-io-en-help.html',
+    },
+    {
+      urlPath: '/img/favicon/favicon.ico',
+      fsPath: 'jestjs-io-en-help_files/img-favicon-favicon.ico',
+    },
+    {
+      urlPath: '/css/main.css',
+      fsPath: 'jestjs-io-en-help_files/css-main.css',
+    },
+    {
+      urlPath: '/js/codetabs.js',
+      fsPath: 'jestjs-io-en-help_files/js-codetabs.js',
+    },
+    {
+      urlPath: '/img/jest.svg',
+      fsPath: 'jestjs-io-en-help_files/img-jest.svg',
+    },
+    {
+      urlPath: '/img/language.svg',
+      fsPath: 'jestjs-io-en-help_files/img-language.svg',
+    },
+    {
+      urlPath: '/img/jest-outline.svg',
+      fsPath: 'jestjs-io-en-help_files/img-jest-outline.svg',
+    },
+    {
+      urlPath: '/img/oss_logo.png',
+      fsPath: 'jestjs-io-en-help_files/img-oss_logo.png',
+    },
   ];
-  const resousesData = await Promise.all(
-    pathFileTuples.map(([, filePath]) => fs.readFile(join(fixtureDir, filePath))),
+
+  fixtures.data = await Promise.all(
+    fixtures.resourses.map(({ fsPath }) => fs.readFile(join(fixtureDir, fsPath))),
   );
-  fixtures.resourses = pathFileTuples
-    .map((tuple, i) => [...tuple, resousesData[i]])
-    .map(([urlPath, filePath, data]) => ({ urlPath, filePath, data }));
 });
 
 afterAll(() => {
@@ -66,24 +72,19 @@ beforeEach(async () => {
 
 
 test('load data to files', async () => {
-  mockLoaderRequests();
+  nock(fixtures.url.origin)
+    .get(path => getResoursePath(path))
+    .times(fixtures.resourses.length)
+    .reply(200, path => getResourseData(path));
 
-  const {
-    urlPath: urlRootHtmlPath,
-    filePath: createdRootHtmlPath,
-  } = head(fixtures.resourses);
-  const targetUrl = createUrlByPath(urlRootHtmlPath);
-  await loadPage(targetUrl.href, fixtures.targetDir);
-  const createdHtmlData = await fs.readFile(
-    join(fixtures.targetDir, createdRootHtmlPath),
-    'utf8',
-  );
-  expect(createdHtmlData).toBe(fixtures.localHtmlData.toString());
+  await loadPage(fixtures.url.href, fixtures.targetDir);
 
-  const resoursesData = await Promise.all(tail(fixtures.resourses)
-    .map(({ filePath }) => fs.readFile(join(fixtures.targetDir, filePath))));
-  resoursesData.forEach((data, i) => {
-    expect(Buffer.compare(data, tail(fixtures.resourses)[i].data)).toBe(0);
+  const ethalons = [fixtures.localHtml, ...tail(fixtures.data)];
+  const loadedFiles = await Promise.all(fixtures.resourses
+    .map(({ fsPath }) => fs.readFile(join(fixtures.targetDir, fsPath))));
+
+  loadedFiles.forEach((file, i) => {
+    expect(Buffer.compare(file, ethalons[i])).toBe(0);
   });
 });
 
@@ -91,14 +92,15 @@ test('page not found', async () => {
   nock(fixtures.url.origin)
     .get(path => getResoursePath(path))
     .reply(404);
-  const targetUrl = createUrlByPath(head(fixtures.resourses).urlPath);
-  await expect(loadPage(targetUrl.href, fixtures.targetDir))
+  await expect(loadPage(fixtures.url.href, fixtures.targetDir))
     .rejects.toThrow('404');
 });
 
 test('directory not exist', async () => {
-  mockLoaderRequests();
-  const targetUrl = createUrlByPath(head(fixtures.resourses).urlPath);
-  await expect(loadPage(targetUrl.href, join(fixtures.targetDir, 'not-exist')))
+  nock(fixtures.url.origin)
+    .get(path => getResoursePath(path))
+    .times(fixtures.resourses.length)
+    .reply(200, path => getResourseData(path));
+  await expect(loadPage(fixtures.url.href, join(fixtures.targetDir, 'not-exist')))
     .rejects.toThrow('ENOENT');
 });
