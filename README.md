@@ -17,5 +17,8 @@ Options:
   -h, --help          output usage information
 ```
 
-## How to instal and load one page
+## How to install and load one html page
 [![asciicast](https://asciinema.org/a/F2v654EZ0XCgfz1J6PWqm0gIO.svg)](https://asciinema.org/a/F2v654EZ0XCgfz1J6PWqm0gIO)
+
+## How to install and load html page with local resourses
+[![asciicast](https://asciinema.org/a/gKdZPBUM0Wop0Dnt5M4EL9qJb.svg)](https://asciinema.org/a/gKdZPBUM0Wop0Dnt5M4EL9qJb)
