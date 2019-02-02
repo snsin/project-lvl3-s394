@@ -22,3 +22,6 @@ Options:
 
 ## How to install and load html page with local resourses
 [![asciicast](https://asciinema.org/a/gKdZPBUM0Wop0Dnt5M4EL9qJb.svg)](https://asciinema.org/a/gKdZPBUM0Wop0Dnt5M4EL9qJb)
+
+## How to install, get logging on and load html page
+[![asciicast](https://asciinema.org/a/kvY8SguEorEBMiTi46Ox8CYxv.svg)](https://asciinema.org/a/kvY8SguEorEBMiTi46Ox8CYxv)
