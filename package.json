@@ -37,6 +37,11 @@
     "coverageReporters": [
       "lcov",
       "text"
+    ],
+    "testPathIgnorePatterns": [
+      "<rootDir>/build/",
+      "<rootDir>/node_modules/",
+      "<rootDir>/__tests__/__fixtures__/"
     ]
   },
   "devDependencies": {
