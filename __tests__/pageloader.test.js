@@ -69,7 +69,7 @@ test('page not found', async () => {
   nock(fixtures.url.origin)
     .get(/\/*/)
     .reply(404);
-  expect(loadPage(fixtures.url.href, fixtures.targetDir))
+  await expect(loadPage(fixtures.url.href, fixtures.targetDir))
     .rejects.toThrow('404');
 });
 
@@ -78,6 +78,6 @@ test('directory not exist', async () => {
     .get(/\/*/)
     .times(fixtures.resourses.length)
     .reply(200, 'OK');
-  expect(loadPage(fixtures.url.href, join(fixtures.targetDir, 'not-exist')))
+  await expect(loadPage(fixtures.url.href, join(fixtures.targetDir, 'not-exist')))
     .rejects.toThrow('ENOENT');
 });
