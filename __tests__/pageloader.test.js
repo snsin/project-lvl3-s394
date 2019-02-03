@@ -58,13 +58,13 @@ describe('load data to files', () => {
 
     const ethalons = await Promise.all(
       [fixtures.localHtmlPath, ...tail(fixtures.resourses).map(({ fsPath }) => fsPath)]
-        .map(filepath => fs.readFile(join(fixtures.fixtureDir, filepath))),
+        .map(filepath => fs.readFile(join(fixtures.fixtureDir, filepath), 'utf8')),
     );
     const loadedFiles = await Promise.all(fixtures.resourses
-      .map(({ fsPath }) => fs.readFile(join(fixtures.targetDir, fsPath))));
+      .map(({ fsPath }) => fs.readFile(join(fixtures.targetDir, fsPath), 'utf8')));
 
     loadedFiles.forEach((file, i) => {
-      expect(file.toString('utf8')).toBe(ethalons[i].toString('utf8'));
+      expect(file).toBe(ethalons[i]);
     });
   });
 });
