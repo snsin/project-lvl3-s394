@@ -11,6 +11,9 @@ pageloader
   .action((pageUrl) => {
     const targetDir = pageloader.output || process.cwd();
     loadPage(pageUrl, targetDir)
+      .then(() => {
+        process.exit(0);
+      })
       .catch((err) => {
         const { message } = err;
         console.error(message);
