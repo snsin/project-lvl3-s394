@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`no connection error 1`] = `"Network error: Nock: Disallowed net connect for \\"jestjs.io:443/en/help\\" https://jestjs.io/en/help"`;
+
+exports[`page not found 1`] = `"Network error: Request failed with status code 404 https://jestjs.io/en/help"`;
