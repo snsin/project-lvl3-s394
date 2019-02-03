@@ -26,5 +26,8 @@ Options:
 ## How to install, get logging on and load html page
 [![asciicast](https://asciinema.org/a/kvY8SguEorEBMiTi46Ox8CYxv.svg)](https://asciinema.org/a/kvY8SguEorEBMiTi46Ox8CYxv)
 
-## How to install ang get error messages
+## How to install and get error messages
 [![asciicast](https://asciinema.org/a/c30Gl4xO1YW9GVuuU2qgOX1YK.svg)](https://asciinema.org/a/c30Gl4xO1YW9GVuuU2qgOX1YK)
+
+## How to install and get spinners to spin
+[![asciicast](https://asciinema.org/a/ugSvX4krcAG1Le0mCODnrnKw9.svg)](https://asciinema.org/a/ugSvX4krcAG1Le0mCODnrnKw9)
