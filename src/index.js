@@ -76,8 +76,7 @@ const createResoursesWriteList = (responses, dir, resourses) => responses
 
 const loadPage = (pageUrl, targetDir) => {
   log('start %o', loggingName);
-  log('page url:', pageUrl);
-  log('target directory: %s', targetDir);
+  log('params: url - %s ; target directory - %s', pageUrl, targetDir);
   let $;
   let resourses;
   const resoursesDirName = createFileName(pageUrl, '_files');
@@ -91,14 +90,15 @@ const loadPage = (pageUrl, targetDir) => {
       log('response recieved from %s status: %d', pageUrl, htmlResp.status);
       $ = cheerio.load(htmlResp.data);
       resourses = getLocalResouses($);
-      log('resourses list created: %O', resourses);
+      log('resourses list created:\n%O', resourses);
       return Promise.all(getResousesRequests(resourses, pageUrl));
     })
-    .then(responses => Promise.all(
-      createResoursesWriteList(responses, resoursesDirPath, resourses),
-    ))
+    .then((responses) => {
+      log('all resourses recieved, got %d data sets', responses.length);
+      return Promise.all(createResoursesWriteList(responses, resoursesDirPath, resourses));
+    })
     .then(() => {
-      log('resourses files written: \n%O', resourses.map(({ filename }) => filename));
+      log('resourses files written:\n%O', resourses.map(({ filename }) => filename));
       resourses.forEach(({ node, attrname, filename }) => {
         node.attr(attrname, path.join(resoursesDirName, filename));
       });
@@ -106,12 +106,12 @@ const loadPage = (pageUrl, targetDir) => {
       log('writing result html started: %s', resultHtmlPath);
       return fs.writeFile(resultHtmlPath, $.html(), 'utf8');
     })
-    .catch((e) => {
-      err('error thrown %O', e);
-      throw new Error(createMessage(e));
-    })
     .then(() => {
-      log('%s downloaded to %s', pageUrl, targetDir);
+      log('all OK: %s downloaded to %s', pageUrl, targetDir);
+    })
+    .catch((e) => {
+      err('error thrown\n%O', e);
+      throw new Error(createMessage(e));
     });
 };
 
