@@ -19,8 +19,8 @@ const createFileName = (pageUrl, ending = '') => {
 
 const errorTypeSelector = {
   syscall: e => e.message,
-  response: e => `${e.message} ${e.config.url}`,
-  unknown: e => `Unknown error ${e.message}`,
+  response: e => `Network error: ${e.message} ${e.config.url}`,
+  unknown: e => `Unknown error: ${e.message}`,
 };
 
 const createMessage = (e = { message: '' }) => {
