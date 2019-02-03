@@ -5,11 +5,9 @@ import cheerio from 'cheerio';
 import { findKey, has } from 'lodash';
 import debug from 'debug';
 
-import { name as packagename } from '../package.json';
-
-const loggingName = packagename.match(/\w+-\w+/)[0];
-const log = debug(`${loggingName}:log`);
-const err = debug(`${loggingName}:err`);
+const loggingName = 'page-loader:';
+const log = debug(`${loggingName}log`);
+const err = debug(`${loggingName}err`);
 
 
 const createFileName = (pageUrl, ending = '') => {
