@@ -4,10 +4,12 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 import { findKey, has } from 'lodash';
 import debug from 'debug';
+import Listr from 'listr';
 
 const loggingName = 'page-loader:';
 const log = debug(`${loggingName}log`);
 const err = debug(`${loggingName}err`);
+const spec = debug(`${loggingName}spc`);
 
 
 const createFileName = (pageUrl, ending = '') => {
@@ -54,21 +56,24 @@ const getLocalResouses = (dom) => {
     });
 };
 
-const getResousesRequests = (resourses, pageUrl) => resourses
-  .map(({ url }) => {
+const addSpinnersToTasks = (resourses, tasks, pageUrl) => resourses
+  .forEach(({ url, filename }) => {
     const resUrl = new URL(pageUrl);
     resUrl.pathname = url;
-    return axios({
-      method: 'get',
-      url: resUrl.href,
-      responseType: 'stream',
-    });
+    spec('spinner %s', resUrl);
+    tasks.add(
+      {
+        title: `Loading ${resUrl.href}`,
+        task: ctx => axios({ method: 'get', url: resUrl.href, responseType: 'stream' })
+          .then((resp) => { ctx[filename] = resp; }),
+      },
+    );
   });
 
-const createResoursesWriteList = (responses, dir, resourses) => responses
-  .map((resp, i) => {
-    const filepath = path.join(dir, resourses[i].filename);
-    return resp.data.pipe(createWriteStream(filepath));
+const createResoursesWriteList = (responses, dir) => Object.keys(responses)
+  .map((filename) => {
+    const filepath = path.join(dir, filename);
+    return responses[filename].data.pipe(createWriteStream(filepath));
   });
 
 
@@ -89,11 +94,16 @@ const loadPage = (pageUrl, targetDir) => {
       $ = cheerio.load(htmlResp.data);
       resourses = getLocalResouses($);
       log('resourses list created:\n%O', resourses);
-      return Promise.all(getResousesRequests(resourses, pageUrl));
+      const tasks = new Listr({ concurrent: true });
+      addSpinnersToTasks(resourses, tasks, pageUrl);
+      spec('Listr tasks\n%O', tasks);
+      return tasks.run();
     })
-    .then((responses) => {
-      log('all resourses recieved, got %d data sets', responses.length);
-      return Promise.all(createResoursesWriteList(responses, resoursesDirPath, resourses));
+    .then((responsesObject) => {
+      log('all resourses recieved, got %d data sets', Object.keys(responsesObject).length);
+      return Promise.all(
+        createResoursesWriteList(responsesObject, resoursesDirPath, resourses),
+      );
     })
     .then(() => {
       log('resourses files written:\n%O', resourses.map(({ filename }) => filename));
