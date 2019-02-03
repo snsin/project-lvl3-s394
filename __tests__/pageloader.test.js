@@ -13,6 +13,11 @@ beforeAll(() => {
 
 afterAll(() => {
   nock.cleanAll();
+  nock.enableNetConnect();
+});
+
+afterEach(() => {
+  nock.cleanAll();
 });
 
 beforeEach(async () => {
@@ -67,17 +72,32 @@ describe('load data to files', () => {
 
 test('page not found', async () => {
   nock(fixtures.url.origin)
-    .get(/\/*/)
+    .get(/\/.*/)
     .reply(404);
-  return expect(loadPage(fixtures.url.href, fixtures.targetDir))
-    .rejects.toThrow('404');
+  const throwPageNotFound = () => loadPage(fixtures.url.href, fixtures.targetDir);
+  return expect(throwPageNotFound()).rejects.toThrowErrorMatchingSnapshot();
 });
 
-test('directory not exist', async () => {
-  nock(fixtures.url.origin)
-    .get(/\/*/)
-    .times(fixtures.resourses.length)
-    .reply(200, 'OK');
-  return expect(loadPage(fixtures.url.href, join(fixtures.targetDir, 'not-exist')))
-    .rejects.toThrow('ENOENT');
+test('no connection error', async () => {
+  const throwConnectionError = () => loadPage(fixtures.url.href, fixtures.targetDir);
+  return expect(throwConnectionError()).rejects.toThrowErrorMatchingSnapshot();
+});
+
+
+describe('file system errors', () => {
+  beforeEach(() => {
+    nock(fixtures.url.origin)
+      .get(/\/.*/)
+      .times(fixtures.resourses.length)
+      .reply(200, 'OK');
+  });
+
+  test('directory not exist', async () => expect(loadPage(fixtures.url.href,
+    join(fixtures.targetDir, 'not-exist'))).rejects.toThrow('ENOENT'));
+
+  test('no write access', async () => {
+    await fs.chmod(fixtures.targetDir, 555);
+    return expect(loadPage(fixtures.url.href, fixtures.targetDir))
+      .rejects.toThrow('EACCES');
+  });
 });
