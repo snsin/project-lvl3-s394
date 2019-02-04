@@ -12,6 +12,16 @@ const err = debug(`${loggingName}err`);
 const spec = debug(`${loggingName}spc`);
 
 
+const validateUrl = url => new Promise((resolve, reject) => {
+  let resultUrl;
+  try {
+    resultUrl = new URL(url);
+  } catch (e) {
+    reject(e);
+  }
+  resolve(resultUrl);
+});
+
 const createFileName = (pageUrl, ending = '') => {
   const { hostname, pathname } = new URL(pageUrl);
   const pathParts = pathname.split('/').filter(w => w.length > 0);
@@ -20,13 +30,15 @@ const createFileName = (pageUrl, ending = '') => {
 };
 
 const errorTypeSelector = {
+  argument: e => `Invalid argument: ${e.message}`,
   syscall: e => `System error: ${e.message}`,
   response: e => `Network error: ${e.message} ${e.config.url}`,
   unknown: e => `Unknown error: ${e.message}`,
 };
 
 const createMessage = (e = { message: '' }) => {
-  const errType = findKey(errorTypeSelector, fn => has(e, fn.name));
+  const errType = e instanceof TypeError
+    ? 'argument' : findKey(errorTypeSelector, fn => has(e, fn.name));
   return errType ? errorTypeSelector[errType](e) : errorTypeSelector.unknown(e);
 };
 
@@ -82,9 +94,14 @@ const loadPage = (pageUrl, targetDir) => {
   log('params: url - %s ; target directory - %s', pageUrl, targetDir);
   let $;
   let resourses;
-  const resoursesDirName = createFileName(pageUrl, '_files');
-  const resoursesDirPath = path.join(targetDir, resoursesDirName);
-  return fs.mkdir(resoursesDirPath)
+  let resoursesDirName;
+  let resoursesDirPath;
+  return validateUrl(pageUrl)
+    .then((validUrl) => {
+      resoursesDirName = createFileName(validUrl.href, '_files');
+      resoursesDirPath = path.join(targetDir, resoursesDirName);
+      return fs.mkdir(resoursesDirPath);
+    })
     .then(() => {
       log('resourses directory created: %s', resoursesDirPath);
       return axios.get(pageUrl);
