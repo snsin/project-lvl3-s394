@@ -6,18 +6,14 @@ import loadPage from '..';
 pageloader
   .version(version)
   .description('Loads web pades to local storage.')
-  .option('-o, --output [dir]', 'Output directory')
+  .option('-o, --output [dir]', 'Output directory', process.cwd())
   .arguments('<pageUrl>')
   .action((pageUrl) => {
-    const targetDir = pageloader.output || process.cwd();
-    loadPage(pageUrl, targetDir)
-      .then(() => {
-        process.exit(0);
-      })
+    loadPage(pageUrl, pageloader.output)
       .catch((err) => {
         const { message } = err;
         console.error(message);
-        process.exit(-1);
+        process.exit(1);
       });
   })
   .parse(process.argv);
