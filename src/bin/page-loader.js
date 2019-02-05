@@ -11,9 +11,9 @@ pageloader
   .action((pageUrl) => {
     loadPage(pageUrl, pageloader.output)
       .catch((err) => {
-        const { message } = err;
+        const { message, code } = err;
         console.error(message);
-        process.exit(1);
+        process.exit(code);
       });
   })
   .parse(process.argv);

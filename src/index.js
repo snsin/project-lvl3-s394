@@ -30,16 +30,20 @@ const createFileName = (pageUrl, ending = '') => {
 };
 
 const errorTypeSelector = {
-  argument: e => `Invalid argument: ${e.message}`,
-  syscall: e => `System error: ${e.message}`,
-  response: e => `Network error: ${e.message} ${e.config.url}`,
-  unknown: e => `Unknown error: ${e.message}`,
+  argument: e => ({ msg: `Invalid argument: ${e.message}`, code: 1 }),
+  syscall: e => ({ msg: `System error: ${e.message}`, code: 2 }),
+  response: e => ({ msg: `Network error: ${e.message} ${e.config.url}`, code: 3 }),
+  unknown: e => ({ msg: `Unknown error: ${e.message}`, code: 4 }),
 };
 
-const createMessage = (e = { message: '' }) => {
+const createError = (e = { message: '' }) => {
   const errType = e instanceof TypeError
     ? 'argument' : findKey(errorTypeSelector, fn => has(e, fn.name));
-  return errType ? errorTypeSelector[errType](e) : errorTypeSelector.unknown(e);
+  const { msg, code } = errType
+    ? errorTypeSelector[errType](e) : errorTypeSelector.unknown(e);
+  const error = new Error(msg);
+  error.code = code;
+  return error;
 };
 
 const attrToTagTable = {
@@ -136,7 +140,7 @@ const loadPage = (pageUrl, targetDir) => {
     })
     .catch((e) => {
       err('error thrown\n%O', e);
-      throw new Error(createMessage(e));
+      throw createError(e);
     });
 };
 
